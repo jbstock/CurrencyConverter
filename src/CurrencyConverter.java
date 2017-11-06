@@ -104,8 +104,6 @@ public class CurrencyConverter extends HttpServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	private String convert(String curr1, String curr2, String value) {
@@ -113,10 +111,7 @@ public class CurrencyConverter extends HttpServlet {
 		float c2 = Float.parseFloat(curr2);
 		float v =  Float.parseFloat(value);
 		
-		float temp = v/c1;
-		temp = temp*c2;
-		
-		return (Float.toString(temp));
+		return (Float.toString((v/c1)*c2));
 	}
 	
 	private Connection connect() {
@@ -124,30 +119,23 @@ public class CurrencyConverter extends HttpServlet {
         connectionProps.put("user", DB_CONNECTION_USERNAME);
         connectionProps.put("password", DB_CONNECTION_PWD);
 
-    	
     	Connection conn = null; 
         try 
         {
             Class.forName(DB_DRIVE_NAME);
         } 
         
-        
         catch (ClassNotFoundException ex) 
         {
         	ex.getMessage(); 
         }
         
-        
         try 
         {
             conn = DriverManager.getConnection(DB_CONNECTION_URL, connectionProps); 
- 		//DriverManager.getConnection( DbAccessConfig.DB_CONNECTION_URL, DbAccessConfig.DB_CONNECTION_USERNAME, DbAccessConfig.DB_CONNECTION_PWD );
         } 
         catch (SQLException ex) {
-        	
         	ex.getMessage(); 
-            // log.error( "DbUtils.connect: Unable to connect to database", ex );
-            //throw new ClubsException( "DbUtils.connect: Unable to connect to database " + ex.getMessage() );
         }
 		return conn;
 	}
