@@ -1,5 +1,11 @@
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -13,6 +19,12 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/CurrencyConverter")
 public class CurrencyConverter extends HttpServlet {
 	private static final long serialVersionUID = 1L;
+	String DB_DRIVE_NAME  = "com.mysql.jdbc.Driver";
+	String DB_NAME    = "currency";
+	String DB_SERVER_NAME = "uml.cs.uga.edu";
+	String DB_CONNECTION_URL = "jdbc:mysql://uml.cs.uga.edu:3306/currency";
+	String DB_CONNECTION_USERNAME = "demo";
+	String DB_CONNECTION_PWD = "demo";
        
     /**
      * @see HttpServlet#HttpServlet()
@@ -27,8 +39,6 @@ public class CurrencyConverter extends HttpServlet {
 	 */
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		
-		
 	}
 
 	/**
@@ -41,6 +51,7 @@ public class CurrencyConverter extends HttpServlet {
 		String value = null;
 		String origCurr = null;
 		String targetCurr = null;
+		Connection c1 = this.connect();
 		
 		response.setContentType("text/html");
 		
@@ -55,24 +66,90 @@ public class CurrencyConverter extends HttpServlet {
 		origCurr = request.getParameter("currsymbol1");
 		targetCurr = request.getParameter("currsymbol2");
 		
-		String convertedValue = convert(origCurr, targetCurr, value);
+		try {
+			PreparedStatement ps1 = c1.prepareStatement("SELECT dollarvalue FROM currency WHERE currsymbol=?");
+			PreparedStatement ps2 = c1.prepareStatement("SELECT dollarvalue FROM currency WHERE currsymbol=?");
+			ps1.setString(1, origCurr);
+			ps2.setString(1, targetCurr);
+			ResultSet rs1 = ps1.executeQuery();
+			ResultSet rs2 = ps2.executeQuery();
+			
+			String result1;
+			String result2;
+			
+			if (rs1.next())
+				result1 = rs1.getString(1);
+			else
+				result1 = null;
+			
+			if (rs2.next())
+				result2 = rs2.getString(1);
+			else
+				result2 = null;
+			
+			String convertedValue = convert(result1, result2, value);
+			
+			out.println("<html><head><title>" + title + "</title></head>");
+			out.println("<body>");
+			
+			out.println("<h3>" + "Result" + "<h3>");
+			out.println("<p>" + value + " " + origCurr + " = " + convertedValue + " "  + targetCurr + "</p>");
+			
+			out.println("</body>");
+			out.println("</html>");
+			
+			out.close();
+			
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
-		out.println("<html><head><title>" + title + "</title></head>");
-		out.println("<body>");
 		
-		out.println("<h3>" + title + "<h3>");
-		out.println("<p>" + value + " " + origCurr + " = " + convertedValue + " "  + targetCurr + "</p>");
-		
-		out.println("</body>");
-		out.println("</html>");
-		
-		out.close();
 	}
 	
 	private String convert(String curr1, String curr2, String value) {
+		float c1 = Float.parseFloat(curr1);
+		float c2 = Float.parseFloat(curr2);
+		float v =  Float.parseFloat(value);
 		
+		float temp = v/c1;
+		temp = temp*c2;
 		
-		return "10";
+		return (Float.toString(temp));
+	}
+	
+	private Connection connect() {
+		Properties connectionProps = new Properties();
+        connectionProps.put("user", DB_CONNECTION_USERNAME);
+        connectionProps.put("password", DB_CONNECTION_PWD);
+
+    	
+    	Connection conn = null; 
+        try 
+        {
+            Class.forName(DB_DRIVE_NAME);
+        } 
+        
+        
+        catch (ClassNotFoundException ex) 
+        {
+        	ex.getMessage(); 
+        }
+        
+        
+        try 
+        {
+            conn = DriverManager.getConnection(DB_CONNECTION_URL, connectionProps); 
+ 		//DriverManager.getConnection( DbAccessConfig.DB_CONNECTION_URL, DbAccessConfig.DB_CONNECTION_USERNAME, DbAccessConfig.DB_CONNECTION_PWD );
+        } 
+        catch (SQLException ex) {
+        	
+        	ex.getMessage(); 
+            // log.error( "DbUtils.connect: Unable to connect to database", ex );
+            //throw new ClubsException( "DbUtils.connect: Unable to connect to database " + ex.getMessage() );
+        }
+		return conn;
 	}
 
 }
